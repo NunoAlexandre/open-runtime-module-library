@@ -108,7 +108,7 @@ impl orml_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type AssetId = u32;
-	type Authority = AsEnsureOriginWithArg<frame_system::EnsureRoot<AccountId32>>;
+	type Authority = AssetAuthority;
 	type CustomMetadata = CustomMetadata;
 	type AssetProcessor = orml_asset_registry::SequentialId<Runtime>;
 	type WeightInfo = ();
@@ -121,14 +121,14 @@ ord_parameter_types! {
 }
 
 pub struct AssetAuthority;
-impl EnsureOriginWithArg<Origin, u32> for AssetAuthority {
+impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
 	type Success = ();
 
-	fn try_origin(origin: Origin, asset_id: &u32) -> Result<Self::Success, Origin> {
+	fn try_origin(origin: Origin, asset_id: &Option<u32>) -> Result<Self::Success, Origin> {
 		match asset_id {
 			// We mock an edge case where the asset_id 42 requires a special
 			// origin authority check.
-			42 => EnsureSignedBy::<Account42, AccountId32>::try_origin(origin.clone())
+			Some(2) => EnsureSignedBy::<Account42, AccountId32>::try_origin(origin.clone())
 				.map(|_| ())
 				.map_err(|_| origin),
 
