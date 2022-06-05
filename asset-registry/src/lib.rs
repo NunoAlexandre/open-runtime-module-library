@@ -3,7 +3,7 @@
 // This is fixed in https://github.com/rust-lang/rust-clippy/issues/8321
 #![allow(clippy::large_enum_variant)]
 
-use frame_support::{pallet_prelude::*, traits::EnsureOrigin, transactional};
+use frame_support::{pallet_prelude::*, transactional};
 use frame_system::pallet_prelude::*;
 use orml_traits::asset_registry::AssetProcessor;
 use scale_info::TypeInfo;
@@ -37,6 +37,7 @@ pub struct AssetMetadata<Balance, CustomMetadata: Parameter + Member + TypeInfo>
 #[frame_support::pallet]
 pub mod module {
 	use super::*;
+	use frame_support::traits::EnsureOriginWithArg;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -48,8 +49,8 @@ pub mod module {
 		/// The type used as a unique asset id,
 		type AssetId: Parameter + Member + Default + TypeInfo;
 
-		/// The origin that is allowed to manipulate metadata.
-		type AuthorityOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
+		/// Checks that an origin has the authority to register/update an asset
+		type Authority: EnsureOriginWithArg<Self::Origin, Option<Self::AssetId>>;
 
 		/// A filter ran upon metadata registration that assigns an is and
 		/// potentially modifies the supplied metadata.
@@ -147,7 +148,7 @@ pub mod module {
 			metadata: AssetMetadata<T::Balance, T::CustomMetadata>,
 			asset_id: Option<T::AssetId>,
 		) -> DispatchResult {
-			T::AuthorityOrigin::ensure_origin(origin)?;
+			T::Authority::ensure_origin(origin, &asset_id.clone())?;
 
 			Self::do_register_asset(metadata, asset_id)
 		}
@@ -165,7 +166,7 @@ pub mod module {
 			location: Option<Option<VersionedMultiLocation>>,
 			additional: Option<T::CustomMetadata>,
 		) -> DispatchResult {
-			T::AuthorityOrigin::ensure_origin(origin)?;
+			T::Authority::ensure_origin(origin, &Some(asset_id.clone()))?;
 
 			Self::do_update_asset(
 				asset_id,
