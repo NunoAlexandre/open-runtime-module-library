@@ -4,7 +4,7 @@ use crate as orml_asset_registry;
 
 use codec::{Decode, Encode};
 use cumulus_primitives_core::{ChannelStatus, GetChannelInfo, ParaId};
-use frame_support::traits::{AsEnsureOriginWithArg, EnsureOrigin, EnsureOriginWithArg};
+use frame_support::traits::{EnsureOrigin, EnsureOriginWithArg};
 use frame_support::{
 	construct_runtime, match_types, ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU32, ConstU64, Everything, Nothing},
@@ -104,20 +104,10 @@ pub struct CustomMetadata {
 	pub fee_per_second: u128,
 }
 
-impl orml_asset_registry::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type AssetId = u32;
-	type Authority = AssetAuthority;
-	type CustomMetadata = CustomMetadata;
-	type AssetProcessor = orml_asset_registry::SequentialId<Runtime>;
-	type WeightInfo = ();
-}
-
-pub const ACCOUNT_42: AccountId = AccountId32::new([42u8; 32]);
+const ADMIN_ASSET_TWO: AccountId = AccountId32::new([42u8; 32]);
 
 ord_parameter_types! {
-	pub const Account42: AccountId = ACCOUNT_42;
+	pub const AdminAssetTwo: AccountId = ADMIN_ASSET_TWO;
 }
 
 pub struct AssetAuthority;
@@ -126,9 +116,8 @@ impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
 
 	fn try_origin(origin: Origin, asset_id: &Option<u32>) -> Result<Self::Success, Origin> {
 		match asset_id {
-			// We mock an edge case where the asset_id 42 requires a special
-			// origin authority check.
-			Some(2) => EnsureSignedBy::<Account42, AccountId32>::try_origin(origin.clone())
+			// We mock an edge case where the asset_id 2 requires a special origin check.
+			Some(2) => EnsureSignedBy::<AdminAssetTwo, AccountId32>::try_origin(origin.clone())
 				.map(|_| ())
 				.map_err(|_| origin),
 
@@ -139,8 +128,18 @@ impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn successful_origin(a: &u32) -> OO {
-		todo!()
+		unimplemented!()
 	}
+}
+
+impl orml_asset_registry::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type AssetId = u32;
+	type AuthorityOrigin = AssetAuthority;
+	type CustomMetadata = CustomMetadata;
+	type AssetProcessor = orml_asset_registry::SequentialId<Runtime>;
+	type WeightInfo = ();
 }
 
 // impl<OuterOrigin, Argument, EO: EnsureOrigin<OuterOrigin>>

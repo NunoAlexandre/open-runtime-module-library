@@ -19,9 +19,12 @@ pub use module::*;
 pub use weights::WeightInfo;
 
 mod impls;
-mod mock;
-mod tests;
 mod weights;
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 /// Data describing the asset properties.
 #[derive(scale_info::TypeInfo, Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
@@ -50,7 +53,7 @@ pub mod module {
 		type AssetId: Parameter + Member + Default + TypeInfo;
 
 		/// Checks that an origin has the authority to register/update an asset
-		type Authority: EnsureOriginWithArg<Self::Origin, Option<Self::AssetId>>;
+		type AuthorityOrigin: EnsureOriginWithArg<Self::Origin, Option<Self::AssetId>>;
 
 		/// A filter ran upon metadata registration that assigns an is and
 		/// potentially modifies the supplied metadata.
@@ -88,10 +91,6 @@ pub mod module {
 		UpdatedAsset {
 			asset_id: T::AssetId,
 			metadata: AssetMetadata<T::Balance, T::CustomMetadata>,
-		},
-		SetLocation {
-			asset_id: T::AssetId,
-			location: Box<VersionedMultiLocation>,
 		},
 	}
 
@@ -148,7 +147,7 @@ pub mod module {
 			metadata: AssetMetadata<T::Balance, T::CustomMetadata>,
 			asset_id: Option<T::AssetId>,
 		) -> DispatchResult {
-			T::Authority::ensure_origin(origin, &asset_id.clone())?;
+			T::AuthorityOrigin::ensure_origin(origin, &asset_id.clone())?;
 
 			Self::do_register_asset(metadata, asset_id)
 		}
@@ -166,7 +165,7 @@ pub mod module {
 			location: Option<Option<VersionedMultiLocation>>,
 			additional: Option<T::CustomMetadata>,
 		) -> DispatchResult {
-			T::Authority::ensure_origin(origin, &Some(asset_id.clone()))?;
+			T::AuthorityOrigin::ensure_origin(origin, &Some(asset_id.clone()))?;
 
 			Self::do_update_asset(
 				asset_id,
