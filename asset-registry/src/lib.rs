@@ -5,7 +5,7 @@
 
 use frame_support::{pallet_prelude::*, transactional};
 use frame_system::pallet_prelude::*;
-use orml_traits::asset_registry::AssetProcessor;
+use orml_traits::asset_registry::{AssetMetadata, AssetProcessor};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Member},
@@ -25,17 +25,6 @@ mod weights;
 mod mock;
 #[cfg(test)]
 mod tests;
-
-/// Data describing the asset properties.
-#[derive(scale_info::TypeInfo, Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct AssetMetadata<Balance, CustomMetadata: Parameter + Member + TypeInfo> {
-	pub decimals: u32,
-	pub name: Vec<u8>,
-	pub symbol: Vec<u8>,
-	pub existential_deposit: Balance,
-	pub location: Option<VersionedMultiLocation>,
-	pub additional: CustomMetadata,
-}
 
 #[frame_support::pallet]
 pub mod module {
